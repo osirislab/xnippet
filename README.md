@@ -22,6 +22,7 @@ The answer is yes, and the only tool we need is xnippet. The procedure is the fo
 
 First, we have to locate the function we want to debug and save its bytes to a file. In my case was:
 
+```
   402542:	55                   	push   %ebp
   402543:	8b ec                	mov    %esp,%ebp
   402545:	83 c4 fc             	add    $0xfffffffc,%esp
@@ -65,6 +66,7 @@ First, we have to locate the function we want to debug and save its bytes to a f
   4025bc:	e8 b3 00 00 00       	call   0x402674
   4025c1:	c9                   	leave  
   4025c2:	c2 14 00             	ret    $0x14
+```
 
 Note that the starting address (the base as I'll call it from now on) is 402542. We need to know this address because most of the jumps and calls we'll found are performed via relative addressing.
 
