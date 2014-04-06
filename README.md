@@ -1,6 +1,6 @@
 # xnippet
 
-## Original description by [Gonzalo J. Carracedo (BatchDrake)](https://twitter.com/BatchDrake).
+## Original description by [Gonzalo J. Carracedo](https://twitter.com/BatchDrake)
 
 I had an amazing weekend in the Xtrelan LAN Party here in Badajoz (Spain). Among other contests and activities, an entertaining hacking contest was brought by Miguel Gesteiro (@mgesteiro) again, and I decided to participate in it. And there I found a reversing challenge for Win32. I think it's not necessary to say I don't have any Windows machine, so I had to do the entire reversing via Wine + IDA.
 
@@ -22,7 +22,6 @@ The answer is yes, and the only tool we need is xnippet. The procedure is the fo
 
 First, we have to locate the function we want to debug and save its bytes to a file. In my case was:
 
-`
   402542:	55                   	push   %ebp
   402543:	8b ec                	mov    %esp,%ebp
   402545:	83 c4 fc             	add    $0xfffffffc,%esp
@@ -66,7 +65,6 @@ First, we have to locate the function we want to debug and save its bytes to a f
   4025bc:	e8 b3 00 00 00       	call   0x402674
   4025c1:	c9                   	leave  
   4025c2:	c2 14 00             	ret    $0x14
-`
 
 Note that the starting address (the base as I'll call it from now on) is 402542. We need to know this address because most of the jumps and calls we'll found are performed via relative addressing.
 
@@ -78,7 +76,7 @@ As I said above, this functions need to be, if not fully implemented, at least r
 
 xnippet looks for functions expored by .so files, so I'm going to writte a couple of functions imitating PostMessage and SendMessage, I'll call it intercept.c:
 
-`
+```
 #include <stdio.h>
 
 int
@@ -92,7 +90,7 @@ SendMessage (void *hWnd, int msg, unsigned int wParam, unsigned int lParam)
 {
   printf ("SendMessage (%p, %d, %d, %d)\n", hWnd, msg, wParam, lParam);
 }
-`
+```
 
 Let's compile it:
 
@@ -114,17 +112,17 @@ void snippet (1, 10, 1, (void *) 0xaaaaaaaa, (void *) 0xbbbbbbbb);
 
 And the results are like this:
 
-`
+```
 % ./xnippet -b 0x402542 -f ./intercept.so:PostMessage:0x40266e -f ./intercept.so:SendMessage:0x402674 snippet.bin i:01 i:10: i:1 x:0xaaaaaaaa x:0xbbbbbbbb -m
 ----------8<-----------------------------------
 PostMessage (0xbbbbbbbb, 1036, 0, 0)
 SendMessage (0xaaaaaaaa, 16, 0, 0)
 ----------8<-----------------------------------
-`
+```
 
 Playing with the values we can discover different behaviors:
 
-`
+```
 % ./xnippet -b 0x402542 -f ./intercept.so:PostMessage:0x40266e -f ./intercept.so:SendMessage:0x402674 snippet.bin i:01 i:10: i:20 x:0xaaaaaaaa x:0xbbbbbbbb -m
 ----------8<-----------------------------------
 PostMessage (0xbbbbbbbb, 1036, -3, 0)
@@ -135,17 +133,17 @@ SendMessage (0xaaaaaaaa, 16, 0, 0)
 ----------8<-----------------------------------
 SendMessage (0xaaaaaaaa, 16, 0, 0)
 ----------8<-----------------------------------
-`
+```
 
 And the one I was looking for:
 
-`
+```
 % ./xnippet -b 0x402542 -f ./intercept.so:PostMessage:0x40266e -f ./intercept.so:SendMessage:0x402674 snippet.bin i:01 i:-35: i:0 x:0xaaaaaaaa x:0xbbbbbbbb -m
 ----------8<-----------------------------------
 PostMessage (0xbbbbbbbb, 1036, 35, 0)
 SendMessage (0xaaaaaaaa, 16, 0, 0)
 ----------8<-----------------------------------
-`
+```
 
 Which sends a 35, a positive value I can use with my crackme.
 
